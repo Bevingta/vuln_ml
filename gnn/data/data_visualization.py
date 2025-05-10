@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
-import numpy as np
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import json
 import os
 from sklearn.metrics import roc_curve, auc
+
 # ChatGPT
 def plot_roc_curve(y_true, y_scores, dataset_name="ROC", save_path="visualizations"):
     if not os.path.exists(save_path):

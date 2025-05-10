@@ -42,7 +42,7 @@ def train(model, train_loader, val_loader, optimizer, model_save_path, criterion
     epochs_without_improvement = 0
 
     for epoch in range(epochs):
-        model.train()  # Set model to training mode
+        model.train()
         running_loss = 0.0
         correct = 0
         total = 0
@@ -52,14 +52,14 @@ def train(model, train_loader, val_loader, optimizer, model_save_path, criterion
         with tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs}", unit="batch") as batch_progress:
             for data in batch_progress:
                 data = data.to(device) # So i can use either CPU or GPU depending on machine
-                optimizer.zero_grad()  # Zero gradients
-                out = model(data)  # Forward pass
+                optimizer.zero_grad()
+                out = model(data)
                 
                 # Calculate loss
                 labels = data.y
                 loss = criterion(out, labels)
-                loss.backward()  # Backpropagation
-                optimizer.step()  # Update weights
+                loss.backward() # Backpropagation
+                optimizer.step() # Update weights
                 
                 running_loss += loss.item()
                 batch_losses.append(loss.item())
@@ -88,10 +88,8 @@ def train(model, train_loader, val_loader, optimizer, model_save_path, criterion
             # Validation evaluation with ROC analysis
             val_accuracy, val_loss, val_preds, val_labels, val_probs, _ = evaluate(model, val_loader, criterion, device, roc_implementation)
 
-            # ROC thresholding
-
             fpr, tpr, thresholds = roc_curve(val_labels, val_probs)
-            plot_roc_curve(val_labels, val_probs, dataset_name=f"Val_Epoch{epoch+1}", save_path="visualizations/roc_val") #! Change save_path
+            plot_roc_curve(val_labels, val_probs, dataset_name=f"Val_Epoch{epoch+1}", save_path="visualizations/roc_val")
             youden_index = tpr - fpr
             best_thresh = thresholds[np.argmax(youden_index)]
 
@@ -101,8 +99,7 @@ def train(model, train_loader, val_loader, optimizer, model_save_path, criterion
             # Metrics with thresholded predictions
             prec, rec, f1, _ = precision_recall_fscore_support(val_labels, adjusted_val_preds, average="binary", zero_division=0)
 
-            # Optionally: print it
-            print(f"📈 Epoch {epoch+1}: Val F1 (thresholded @ {best_thresh:.3f}) = {f1:.4f}")
+            print(f"Epoch {epoch+1}: Val F1 (thresholded @ {best_thresh:.3f}) = {f1:.4f}")
             print(f"Validation accuracy: {val_accuracy}")
 
         # Log metrics
@@ -130,7 +127,6 @@ def train(model, train_loader, val_loader, optimizer, model_save_path, criterion
         if scheduler:
             # Pass validation loss to the scheduler
             scheduler.step(val_loss=val_loss)
-        
 
     # Save final loss and metrics
     with open(losses_file_path, 'w') as f:
@@ -141,14 +137,11 @@ def train(model, train_loader, val_loader, optimizer, model_save_path, criterion
 
     print("✅ Training history saved to training_history.json")
 
-
     with open(losses_file_path, 'w') as f:
         json.dump(losses, f, indent=2)
 
     torch.save(model.state_dict(), model_save_path)
     print(f"Model saved to {model_save_path}")
-
-# Evaluate the model
 
 def evaluate(model, loader, criterion, device, roc_implementation=False,):
     model.eval()
@@ -158,7 +151,6 @@ def evaluate(model, loader, criterion, device, roc_implementation=False,):
     all_preds = []
     all_labels = []
     all_probs = []
-
     predictions_dicts = []
 
     with tqdm(loader, desc="Testing model accuracy", unit="batch") as batch_progress:
@@ -198,7 +190,7 @@ def preprocess_pipeline(args, batch_size, downsample_factor):
         load_huggingface_datasets(args.dataset_link)
 
     elif not (os.path.exists("data/split_datasets/train.json") and os.path.exists("data/split_datasets/test.json") and os.path.exists("data/split_datasets/valid.json")):    
-        print("🚧 Splitting dataset into train/val/test...")
+        print("Splitting dataset into train/val/test...")
         with open(args.in_dataset, 'r') as f:
             full_data = json.load(f)
         subsample_and_split(full_data, "data/split_datasets", upsample_vulnerable=args.upsample_vulnerable, downsample_safe=args.downsample_safe, safe_ratio=args.vul_to_safe_ratio, downsample_factor=downsample_factor)
@@ -214,9 +206,6 @@ def preprocess_pipeline(args, batch_size, downsample_factor):
 
     if args.generate_dataset_only:
         sys.exit()
-    
-    # Save graph for entry 9 in val_dataset
-    test_graph = generate_one_graph(valid_array, 9, True)
 
     '''# === STANDARDIZE CODE === #
     for i in tqdm(range(len(train_array)), desc="Standardizing train functions", unit="function"):
@@ -300,16 +289,10 @@ def main():
     parser.add_argument("--roc-implementation", type=bool, default=True, help="Does the model use ROC curve based decision boundary adjustments? (default: True)")
     parser.add_argument("--architecture-type", type=str, default="rgcn", help="Architecture type (default: rgcn)")
     parser.add_argument("--save-memory", type=bool, default=False, help="Use less RAM by generating graphs every time instead of loading from seen_dict? (default: False)")
-   
     args = parser.parse_args()
 
     if args.download_presplit_datasets and args.dataset_link is None:
         parser.error("--dataset-name is required when --download-presplit-datasets is set to True")
-
-    '''
-    The code below basically handles whether you need to do pre-splitting of data or not. If we do, we a pre-split of the data
-    and try to keep it balanced between datasets of vuln/nonvuln.
-    '''
 
     train_dataset, val_dataset, test_dataset, train_loader, test_loader, val_loader = preprocess_pipeline(args, batch_size, downsample_factor)
 
@@ -323,7 +306,6 @@ def main():
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=3, factor=0.1)
     else:
         scheduler = None
-
     
     # ==== SAVE RUN HISTORY ==== #
 
@@ -333,10 +315,8 @@ def main():
     os.makedirs(run_history_save_path)
     # Save copy of configs to run_history_save_path
     shutil.copy2("configs.json", f"{run_history_save_path}/run_{timestamp}_configs.json")
-
     visualizations_save_path = f"{run_history_save_path}/visualizations"
     os.makedirs(visualizations_save_path, exist_ok=True)
-
     model_save_path = f"{run_history_save_path}/saved_model.pth"
 
     # ==== CREATE LOGGER ==== #
@@ -344,17 +324,6 @@ def main():
 
     #* STEP 2: TRAIN MODEL
     if not args.load_existing_model:
-        # SETTING WEIGHTS TO FIX VULN/NONVULN INBALANCE
-        vuln, nonvuln = train_dataset.get_vuln_nonvuln_split()
-        print(vuln, nonvuln)
-        total = vuln + nonvuln
-
-        # Weight inversely proportional to class frequency
-        weight = torch.tensor([
-            nonvuln / total,   # weight for class 0 (safe)
-            vuln / total       # weight for class 1 (vulnerable)
-        ], dtype=torch.float).to(device)
-        
         criterion = FocalCrossEntropyLoss()
 
         train(model, train_loader, val_loader, optimizer, model_save_path=model_save_path, criterion=criterion, device=device, roc_implementation=args.roc_implementation, losses_file_path=f"{run_history_save_path}/training_losses.json", logger=logger, epochs=epochs, patience=patience, run_history_save_path=run_history_save_path) 
@@ -372,7 +341,7 @@ def main():
             all_labels_test,
             all_preds_test,
             target_names=["Safe", "Vulnerable"],
-            zero_division=0  # suppress warnings for undefined metrics
+            zero_division=0 
         ))
     else:
         test_accuracy, _, all_preds_test, all_labels_test, all_probs_test, prediction_dicts = evaluate(
@@ -383,7 +352,7 @@ def main():
         plot_roc_curve(all_labels_test, all_probs_test, dataset_name="Test", save_path=visualizations_save_path)
         youden_index = tpr - fpr
         best_thresh = thresholds[np.argmax(youden_index)]
-        print(f"📈 Best threshold (Youden's J): {best_thresh:.4f}")
+        print(f"Best threshold (Youden's J): {best_thresh:.4f}")
 
         # Apply new threshold
         adjusted_preds = (np.array(all_probs_test) >= best_thresh).astype(int)
@@ -392,7 +361,7 @@ def main():
         plot_confusion_matrix(all_labels_test, adjusted_preds, dataset_name="Test_ThresholdAdjusted", save_path=visualizations_save_path)
 
         # Report
-        print("\n📊 Adjusted Threshold Performance:")
+        print("\n Adjusted Threshold Performance:")
         print(classification_report(
             all_labels_test,
             adjusted_preds,

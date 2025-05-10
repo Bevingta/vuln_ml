@@ -2,9 +2,8 @@ from torch.utils.data import Dataset
 from torch_geometric.data import Data
 import torch
 import os
-
-from .data_processing import split_name_into_subtokens
 from .graph_gen.graph_generator import generate_one_graph as gengraph
+from .data_processing import split_name_into_subtokens
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_DIR = os.path.join(BASE_DIR, "../../data/final_data")
@@ -57,9 +56,7 @@ class GraphDataset(Dataset):
         node_feature_matrix = torch.zeros((G.number_of_nodes(), len(node_types) + self.embedding_dim))
         node_to_idx = {}
         for index, (node, attrs) in enumerate(G.nodes(data=True)):
-
             node_to_idx[node] = index
-
             # One-hot type
             node_type = attrs.get('type', 'unknown')
             if node_type in node_types:
@@ -81,8 +78,6 @@ class GraphDataset(Dataset):
                 self.skipped_embeddings += 1
             node_feature_matrix[index, len(node_types):] = mean_embedding
 
-
-        
         # b: edge index and edge type
         edge_type_map = {
             "declares": 0,
@@ -105,15 +100,9 @@ class GraphDataset(Dataset):
             edge_index.append([node_to_idx[u], node_to_idx[v]])
             edge_type_str = attrs.get('type', 'unknown')
             edge_attr.append(edge_type_map.get(edge_type_str, -1))  # handle unknowns safely
-        if len(edge_index) == 0:
-            # Add dummy self-loop if no edges
-            edge_index = torch.tensor([[0], [0]], dtype=torch.long)
-            edge_attr = torch.tensor([0], dtype=torch.long)  # default edge type
-        else:
-            edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
-            edge_attr = torch.tensor(edge_attr, dtype=torch.long)
+        edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
+        edge_attr = torch.tensor(edge_attr, dtype=torch.long)
 
-        # LABEL HANDLING: Support both cvss_score (float) and target (already binary)
         label = torch.tensor(int(self.data[idx]["target"]), dtype=torch.long)
         
         flag_keys = [
@@ -129,5 +118,6 @@ class GraphDataset(Dataset):
             dtype=torch.float
         )
 
-        data = Data(x=node_feature_matrix, edge_index=edge_index, edge_attr=edge_attr, y=label, graph_flags=flag_vector)
+        idx_for_data = torch.tensor(int(global_idx))
+        data = Data(x=node_feature_matrix, edge_index=edge_index, edge_attr=edge_attr, y=label, graph_flags=flag_vector, idx=idx_for_data)
         return data
