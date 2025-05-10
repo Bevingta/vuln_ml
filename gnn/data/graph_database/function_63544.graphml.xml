@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d3" for="edge" attr.name="type" attr.type="string"/>
+<key id="d2" for="node" attr.name="condition" attr.type="string"/>
+<key id="d1" for="node" attr.name="type" attr.type="string"/>
+<key id="d0" for="graph" attr.name="potential_buffer_overflow" attr.type="boolean"/>
+<graph edgedefault="directed"><data key="d0">True</data>
+<node id="findMetadata">
+  <data key="d1">FunctionDefinition</data>
+</node>
+<node id="val">
+  <data key="d1">Variable</data>
+</node>
+<node id="indexOf">
+  <data key="d1">FunctionCall</data>
+</node>
+<node id="if_0">
+  <data key="d1">ControlStructure_if</data>
+  <data key="d2">filter.isEmpty(</data>
+</node>
+<node id="if_1">
+  <data key="d1">ControlStructure_if</data>
+  <data key="d2">filter[0] == Metadata::kAny</data>
+</node>
+<edge source="findMetadata" target="val">
+  <data key="d3">declares</data>
+</edge>
+<edge source="findMetadata" target="indexOf">
+  <data key="d3">calls</data>
+</edge>
+<edge source="findMetadata" target="if_0">
+  <data key="d3">contains</data>
+</edge>
+<edge source="findMetadata" target="if_1">
+  <data key="d3">contains</data>
+</edge>
+<edge source="val" target="findMetadata">
+  <data key="d3">used_as_parameter</data>
+</edge>
+<edge source="val" target="indexOf">
+  <data key="d3">used_as_parameter</data>
+</edge>
+</graph></graphml>
