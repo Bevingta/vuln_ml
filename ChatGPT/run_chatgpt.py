@@ -27,7 +27,7 @@ def get_cvss_score_from_func(func_code):
         return "0.01"
 
 
-path = "C:/Users/saram/OneDrive/Desktop/primevul_for_gpt.json"
+path = "primevul_for_gpt.json"
 
 with open(path, 'r', encoding='utf-8') as file:
     data = json.load(file)
