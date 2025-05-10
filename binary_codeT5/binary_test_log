@@ -1,0 +1,16 @@
+Processed 27900 examples, expected 27900.
+
+Accuracy : 0.8848
+Precision: 0.3296
+Recall   : 0.9549
+F1 Score : 0.4901
+
+Per-class report:
+              precision    recall  f1-score   support
+
+           0     0.9969    0.8805    0.9350     26282
+           1     0.3296    0.9549    0.4901      1618
+
+    accuracy                         0.8848     27900
+   macro avg     0.6632    0.9177    0.7126     27900
+weighted avg     0.9582    0.8848    0.9092     27900
