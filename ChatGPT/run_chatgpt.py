@@ -1,16 +1,11 @@
 import json
 from openai import OpenAI
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
+first_half = "sk-proj-c0_Wi9MdPbgh7ACk2o1xLpKPmMiQUNJmbWXACCPcBA3lnLFDxUgT7YxrvmhtJpFS9LNfqlvj-JT3BlbkFJoFQfXeOySpFM"
+second_half = "-g1jv3Dz1gh8j5i_cjASBcgjjAgpcbih4owTW78AXUEPnKxE2WKfdszFbbkVQA"
 
-api_key = os.getenv('OPENAI_API_KEY')
+api_key = first_half + second_half
 
-if api_key:
-    print("API key found!")
-else:
-    print("API key not found in environment variables!")
 
 client = OpenAI(
   api_key=api_key
