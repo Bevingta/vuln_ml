@@ -100,8 +100,14 @@ class GraphDataset(Dataset):
             edge_index.append([node_to_idx[u], node_to_idx[v]])
             edge_type_str = attrs.get('type', 'unknown')
             edge_attr.append(edge_type_map.get(edge_type_str, -1))  # handle unknowns safely
-        edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
-        edge_attr = torch.tensor(edge_attr, dtype=torch.long)
+        if len(edge_index) == 0:
+    # Add dummy self-loop if no edges
+            edge_index = torch.tensor([[0], [0]], dtype=torch.long)
+            edge_attr = torch.tensor([0], dtype=torch.long)  # default edge type
+        else:
+            edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
+            edge_attr = torch.tensor(edge_attr, dtype=torch.long)
+
 
         label = torch.tensor(int(self.data[idx]["target"]), dtype=torch.long)
         
