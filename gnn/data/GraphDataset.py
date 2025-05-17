@@ -101,7 +101,6 @@ class GraphDataset(Dataset):
             edge_type_str = attrs.get('type', 'unknown')
             edge_attr.append(edge_type_map.get(edge_type_str, -1))  # handle unknowns safely
         if len(edge_index) == 0:
-    # Add dummy self-loop if no edges
             edge_index = torch.tensor([[0], [0]], dtype=torch.long)
             edge_attr = torch.tensor([0], dtype=torch.long)  # default edge type
         else:
