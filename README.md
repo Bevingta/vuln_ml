@@ -7,7 +7,7 @@ The goal of this project was to identify the most effective machine learning app
 **1) Clone the repository** \
 `$ git clone https://github.com/Bevingta/vuln_ml.git` \
 **2) Install required libraries** \
-After navigating to the project directory, run: `$ pip install -r requirements.txt` \
+After navigating to the project directory, run: `$ pip install -r requirements.txt` 
 
 ## Run Static Analyzer
 `$ cd rule_based_benchmark` \
