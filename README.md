@@ -54,7 +54,6 @@ You can use any of the following arguments:
 --roc-implementation True/False     # Enable ROC-based threshold tuning (default: True)
 --architecture-type gcn/gat/rgcn    # Type of GNN model architecture (default: rgcn)
 --save-memory True/False            # Regenerate graphs on-the-fly to reduce RAM use (default: False)
-
 ```
 
 **4) Evaluation** \
