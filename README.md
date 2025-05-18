@@ -29,7 +29,9 @@ You can either use your own dataset, or download one of our pre-made datasets. I
     "database_origin": "bigvul"
   }
 ```
-All of the entries should be contained in an array in a json file. If you would like to use one of our pre-made datasets, you can use one of the following datasets: [PrimeVul Upsampled](https://huggingface.co/datasets/alexv26/PrimeVulOversampled), [BigVul Upsampled](https://huggingface.co/datasets/alexv26/BigVulOversampled), or our [Combined Dataset](https://huggingface.co/datasets/alexv26/GNNVulDatasets). To download a huggingface dataset while you run the code, you can use the following command: `$ python gnn_pipeline.py --download-presplit-datasets repo_id`, where `repo_id` is a repo id such as _username/dataset_name_. 
+All of the entries should be contained in an array in a json file. If you would like to use one of our pre-made datasets, you can use one of the following datasets: [PrimeVul Upsampled](https://huggingface.co/datasets/alexv26/PrimeVulOversampled), [BigVul Upsampled](https://huggingface.co/datasets/alexv26/BigVulOversampled), or our [Combined Dataset](https://huggingface.co/datasets/alexv26/GNNVulDatasets). To download a huggingface dataset while you run the code, you can use the following command: \
+`$ python gnn_pipeline.py --download-presplit-datasets repo_id` \
+where `repo_id` is a repo id such as _username/dataset_name_. 
 
 **2) Set configs** \
 In the configs.json file, you can change the configs for the execution, including the number of epochs, patience (how many epochs without improvement until model stops early), L2 regularization rate, dropout rate, etc.
@@ -57,4 +59,6 @@ You can use any of the following arguments:
 ```
 
 **4) Evaluation** \
-After full execution of the pipeline, the model will save model history and visualizations in a subfolder in the run_history directory. If you want to test the model's performance on a single function, you can run the following command: `$ python predict_single_function.py --func func_text --saved-model-path path_to_saved_model` where `path_to_saved_model` is a path to one of the saved models in run_history and `func_text` is a function in string format. 
+After full execution of the pipeline, the model will save model history and visualizations in a subfolder in the run_history directory. If you want to test the model's performance on a single function, you can run the following command: \
+`$ python predict_single_function.py --func func_text --saved-model-path path_to_saved_model` \
+where `path_to_saved_model` is a path to one of the saved models in run_history and `func_text` is a function in string format. 
