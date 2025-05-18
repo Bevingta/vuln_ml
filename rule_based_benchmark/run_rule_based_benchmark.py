@@ -2,7 +2,6 @@ import re
 import json
 from collections import defaultdict
 import numpy as np
-from google.colab import files
 
 class SmartVulnerabilityDetector:
     """Rule-based detector for C/C++ code vulnerabilities without machine learning."""

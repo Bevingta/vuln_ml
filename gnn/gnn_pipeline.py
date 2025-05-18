@@ -186,8 +186,8 @@ def evaluate(model, loader, criterion, device, roc_implementation=False,):
     return accuracy, avg_loss, all_preds, all_labels, predictions_dicts
 
 def preprocess_pipeline(args, batch_size, downsample_factor):
-    if (args.do_data_splitting == False) and args.download_presplit_datasets:
-        load_huggingface_datasets(args.dataset_link)
+    if (args.do_data_splitting == False) and args.download_presplit_datasets is not None:
+        load_huggingface_datasets(args.download_presplit_datasets)
 
     elif not (os.path.exists("data/split_datasets/train.json") and os.path.exists("data/split_datasets/test.json") and os.path.exists("data/split_datasets/valid.json")):    
         print("Splitting dataset into train/val/test...")
@@ -227,9 +227,9 @@ def preprocess_pipeline(args, batch_size, downsample_factor):
 
     # LOAD or CREATE w2v
     if not os.path.exists(W2V_PATH):
-        if args.download_w2v:
+        if args.download_w2v is not None:
             print("Loading w2v from huggingface...")
-            load_w2v_from_huggingface(args.w2v_link)
+            load_w2v_from_huggingface(args.download_w2v)
             w2v = Word2Vec.load(W2V_PATH)
         else:
             print("Training new w2v model")
@@ -278,10 +278,8 @@ def main():
     parser.add_argument("--upsample-vulnerable", type=str, default=False, help="Upsample vulnerable entries (default: False)")
     parser.add_argument("--downsample-safe", type=str, default=False, help="Downsample safe entries (default: False)")
     parser.add_argument("--do-data-splitting", type=bool, default=False, help="Does data need to be split or is it already split? (default: False)")
-    parser.add_argument("--download-presplit-datasets", type=bool, default=False, help="Option to download pre-split datasets from Huggingface (default: False)") 
-    parser.add_argument("--dataset-link", type=str, default="alexv26/GNNVulDatasets", help="Link to download dataset (default: alexv26/GNNVulDatasets)")
-    parser.add_argument("--download-w2v", type=bool, default=False, help="Option to download w2v from Huggingface (default: False)") 
-    parser.add_argument("--w2v-link", type=str, default="alexv26/complete_dset_pretrained_w2v", help="Link to download dataset (default: alexv26/GNNVulDatasets)")
+    parser.add_argument("--download-presplit-datasets", type=str, default=None, help="Option to download pre-split datasets from Huggingface (default: False)") 
+    parser.add_argument("--download-w2v", type=str, default=None, help="Option to download w2v from Huggingface (default: None)") 
     parser.add_argument("--do-lr-scheduling", type=bool, default=True, help="Adjust learning rate after validation loss plateaus (default: True)")
     parser.add_argument("--vul-to-safe-ratio", type=int, default=None, help="Ratio between vulnerable to safe code: 1:n vul/safe (default: 3)")
     parser.add_argument("--generate-dataset-only", type=bool, default=False, help="Only generate dataset splits, do not run model (default: False)")
@@ -290,9 +288,6 @@ def main():
     parser.add_argument("--architecture-type", type=str, default="rgcn", help="Architecture type (default: rgcn)")
     parser.add_argument("--save-memory", type=bool, default=False, help="Use less RAM by generating graphs every time instead of loading from seen_dict? (default: False)")
     args = parser.parse_args()
-
-    if args.download_presplit_datasets and args.dataset_link is None:
-        parser.error("--dataset-name is required when --download-presplit-datasets is set to True")
 
     train_dataset, val_dataset, test_dataset, train_loader, test_loader, val_loader = preprocess_pipeline(args, batch_size, downsample_factor)
 
