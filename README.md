@@ -16,3 +16,17 @@ After navigating to the project directory, run: `$ pip install -r requirements.t
 ## Run GNN
 Navigate to the gnn directory: `$ cd gnn` \
 **1) Dataset setup** 
+You can either use your own dataset, or download one of our pre-made datasets. If you use your own dataset, you entries in the dataset need to follow the following format:
+```
+{
+    "idx": 253185,
+    "func": "...",
+    "target": 0 or 1,
+    "cwe": [
+      "CWE-###"
+    ],
+    "cve": "CVE-####-####",
+    "database_origin": "bigvul"
+  }
+```
+All of the entries should be contained in an array in a json file.
