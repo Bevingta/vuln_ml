@@ -10,6 +10,8 @@ from sklearn.metrics import (
     f1_score,
     classification_report,
 )
+from tqdm import tqdm
+
 
 # 1. Setup device, load model + tokenizer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,7 +23,7 @@ model.to(device)
 model.eval()
 
 # 2. Load your validation DataFrame
-with open("test.json", "r") as f:
+with open("../data/test.json", "r") as f:
     data = json.load(f)
 val_df = pd.DataFrame(data) 
 val_df = val_df[['func', 'target']].dropna()
@@ -49,7 +51,7 @@ all_preds = []
 all_labels = []
 
 with torch.no_grad():
-    for batch in loader:
+    for batch in tqdm(loader, desc="Evaluating"):
         ids, mask, labs = [t.to(device) for t in batch]
         outputs = model(input_ids=ids, attention_mask=mask)
         logits = outputs.logits

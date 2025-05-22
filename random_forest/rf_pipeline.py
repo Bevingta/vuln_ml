@@ -4,6 +4,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
+from tqdm import tqdm
 
 class VulnFeatureExtractor(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -91,7 +92,7 @@ class BalancedVulnDetector:
         first_batch = True
 
         # Count class distribution
-        for df_chunk in self.load_chunks(train_path):
+        for df_chunk in tqdm(self.load_chunks(train_path), desc="Counting class distribution"):
             if 'target' in df_chunk.columns:
                 chunk_vuln = df_chunk['target'].sum()
                 vuln_samples += chunk_vuln
@@ -111,7 +112,7 @@ class BalancedVulnDetector:
         # Training data preparation
         all_X_train, all_y_train = [], []
 
-        for df_chunk in self.load_chunks(train_path):
+        for df_chunk in tqdm(self.load_chunks(train_path), desc="Training batches"):
             X_text = np.array([self.preprocess_code(x) for x in df_chunk['func'].values])
 
             if first_batch:
@@ -224,149 +225,155 @@ class BalancedVulnDetector:
             'issues': issues
         }
 
-    def evaluate(self, test_path):
-        all_preds, all_probs, all_targets = [], [], []
-        vuln_types = {'buffer': 0, 'format': 0, 'memory': 0, 'integer': 0, 'command': 0, 'other': 0}
-        detected = {'buffer': 0, 'format': 0, 'memory': 0, 'integer': 0, 'command': 0, 'other': 0}
+from tqdm import tqdm
 
-        for df_chunk in self.load_chunks(test_path):
-            if 'target' in df_chunk.columns:
-                X_text = np.array([self.preprocess_code(x) for x in df_chunk['func'].values])
-                X_text_vec = self.text_vectorizer.transform(X_text)
-                X_code_features = self.code_feature_extractor.transform(df_chunk['func'].values)
-                X_combined = np.hstack((X_text_vec.toarray(), X_code_features))
+def evaluate(self, test_path):
+    all_preds, all_probs, all_targets = [], [], []
+    vuln_types = {'buffer': 0, 'format': 0, 'memory': 0, 'integer': 0, 'command': 0, 'other': 0}
+    detected = {'buffer': 0, 'format': 0, 'memory': 0, 'integer': 0, 'command': 0, 'other': 0}
 
-                probs = self.model.predict_proba(X_combined)[:, 1]
-                preds = (probs >= self.best_threshold).astype(int)
+    for df_chunk in tqdm(self.load_chunks(test_path), desc="Evaluating"):
+        if 'target' in df_chunk.columns:
+            X_text = np.array([self.preprocess_code(x) for x in df_chunk['func'].values])
+            X_text_vec = self.text_vectorizer.transform(X_text)
+            X_code_features = self.code_feature_extractor.transform(df_chunk['func'].values)
+            X_combined = np.hstack((X_text_vec.toarray(), X_code_features))
 
-                all_preds.extend(preds)
-                all_probs.extend(probs)
-                all_targets.extend(df_chunk['target'].values)
+            probs = self.model.predict_proba(X_combined)[:, 1]
+            preds = (probs >= self.best_threshold).astype(int)
 
-                # Categorize vulnerabilities if CWE info is available
-                if 'cwe' in df_chunk.columns:
-                    for i, (code, cwe, pred) in enumerate(zip(df_chunk['func'].values, df_chunk['cwe'].values, preds)):
-                        if not isinstance(cwe, list): continue
+            all_preds.extend(preds)
+            all_probs.extend(probs)
+            all_targets.extend(df_chunk['target'].values)
 
-                        # Skip if no CWE or not vulnerable
-                        if not cwe or df_chunk['target'].values[i] == 0: continue
+            # Categorize vulnerabilities if CWE info is available
+            if 'cwe' in df_chunk.columns:
+                for i, (code, cwe, pred) in enumerate(zip(df_chunk['func'].values, df_chunk['cwe'].values, preds)):
+                    if not isinstance(cwe, list): continue
 
-                        # Categorize vulnerability
-                        vuln_category = 'other'
-                        for c in cwe:
-                            if c in ['119', '120', '121', '122', '124', '126', '127', '129', '131', '190', '680']:
-                                vuln_category = 'buffer'  # Buffer-related
-                            elif c in ['134', '789']:
-                                vuln_category = 'format'  # Format string
-                            elif c in ['401', '476', '415', '416', '562', '761']:
-                                vuln_category = 'memory'  # Memory management
-                            elif c in ['190', '191', '680']:
-                                vuln_category = 'integer'  # Integer issues
-                            elif c in ['77', '78', '88']:
-                                vuln_category = 'command'  # Command injection
+                    # Skip if no CWE or not vulnerable
+                    if not cwe or df_chunk['target'].values[i] == 0: continue
 
-                        vuln_types[vuln_category] += 1
-                        if pred == 1:
-                            detected[vuln_category] += 1
+                    # Categorize vulnerability
+                    vuln_category = 'other'
+                    for c in cwe:
+                        if c in ['119', '120', '121', '122', '124', '126', '127', '129', '131', '190', '680']:
+                            vuln_category = 'buffer'  # Buffer-related
+                        elif c in ['134', '789']:
+                            vuln_category = 'format'  # Format string
+                        elif c in ['401', '476', '415', '416', '562', '761']:
+                            vuln_category = 'memory'  # Memory management
+                        elif c in ['190', '191', '680']:
+                            vuln_category = 'integer'  # Integer issues
+                        elif c in ['77', '78', '88']:
+                            vuln_category = 'command'  # Command injection
 
-                del X_text, X_text_vec, X_code_features, X_combined
-                gc.collect()
+                    vuln_types[vuln_category] += 1
+                    if pred == 1:
+                        detected[vuln_category] += 1
 
-        # Calculate core metrics
-        y_pred = np.array(all_preds)
-        y_test = np.array(all_targets)
+            del X_text, X_text_vec, X_code_features, X_combined
+            gc.collect()
 
-        tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+    # Calculate core metrics
+    y_pred = np.array(all_preds)
+    y_test = np.array(all_targets)
 
-        results = {
-            'samples': len(y_test),
-            'accuracy': (tp + tn) / len(y_test),
-            'precision': precision,
-            'recall': recall,
-            'f1': f1,
-            'false_positive_rate': fp / (fp + tn) if (fp + tn) > 0 else 0,
-            'review_burden': (tp + fp) / len(y_test),
-            'detection_by_type': {k: {'total': vuln_types[k], 'detected': detected[k],
-                                     'recall': detected[k]/vuln_types[k] if vuln_types[k] > 0 else 0}
-                                 for k in vuln_types},
-            'confusion_matrix': {'tn': int(tn), 'fp': int(fp), 'fn': int(fn), 'tp': int(tp)},
-            'threshold': self.best_threshold
-        }
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
 
-        return results
+    results = {
+        'samples': len(y_test),
+        'accuracy': (tp + tn) / len(y_test),
+        'precision': precision,
+        'recall': recall,
+        'f1': f1,
+        'false_positive_rate': fp / (fp + tn) if (fp + tn) > 0 else 0,
+        'review_burden': (tp + fp) / len(y_test),
+        'detection_by_type': {k: {'total': vuln_types[k], 'detected': detected[k],
+                                 'recall': detected[k]/vuln_types[k] if vuln_types[k] > 0 else 0}
+                             for k in vuln_types},
+        'confusion_matrix': {'tn': int(tn), 'fp': int(fp), 'fn': int(fn), 'tp': int(tp)},
+        'threshold': self.best_threshold
+    }
 
-print("Training model...")
+    return results
 
-# Train the model
-detector = BalancedVulnDetector(batch_size=500)
-detector.train('train.json', 'test.json')
+def main():
+    print("Training model...")
 
-print("Testing model...")
+    # Train the model
+    detector = BalancedVulnDetector(batch_size=500)
+    detector.train('../data/train.json', '../data/test.json')
 
-# Evaluate on test set to get performance metrics
-results = detector.evaluate('test.json')
+    print("Testing model...")
 
-# Print concise performance report
-print(f"MODEL PERFORMANCE SUMMARY:")
-print(f"Overall Metrics:")
-print(f"- Accuracy: {results['accuracy']:.4f}")
-print(f"- Precision: {results['precision']:.4f}")
-print(f"- Recall: {results['recall']:.4f}")
-print(f"- F1 Score: {results['f1']:.4f}")
-print(f"- False Positive Rate: {results['false_positive_rate']:.4f}")
-print(f"- Review Burden: {results['review_burden']*100:.1f}%")
+    # Evaluate on test set to get performance metrics
+    results = detector.evaluate('test.json')
 
-# Print performance by vulnerability type
-print(f"\nPerformance by Vulnerability Type:")
-for vuln_type, data in results['detection_by_type'].items():
-    if data['total'] > 0:
-        print(f"- {vuln_type.capitalize()}: {data['detected']}/{data['total']} detected ({data['recall']*100:.1f}%)")
+    # Print concise performance report
+    print(f"MODEL PERFORMANCE SUMMARY:")
+    print(f"Overall Metrics:")
+    print(f"- Accuracy: {results['accuracy']:.4f}")
+    print(f"- Precision: {results['precision']:.4f}")
+    print(f"- Recall: {results['recall']:.4f}")
+    print(f"- F1 Score: {results['f1']:.4f}")
+    print(f"- False Positive Rate: {results['false_positive_rate']:.4f}")
+    print(f"- Review Burden: {results['review_burden']*100:.1f}%")
 
-# Confusion matrix
-cm = results['confusion_matrix']
-print(f"\nConfusion Matrix:")
-print(f"True Positives: {cm['tp']} | False Negatives: {cm['fn']}")
-print(f"False Positives: {cm['fp']} | True Negatives: {cm['tn']}")
+    # Print performance by vulnerability type
+    print(f"\nPerformance by Vulnerability Type:")
+    for vuln_type, data in results['detection_by_type'].items():
+        if data['total'] > 0:
+            print(f"- {vuln_type.capitalize()}: {data['detected']}/{data['total']} detected ({data['recall']*100:.1f}%)")
 
-# Test on examples
-examples = [
-    """static int vulnerable_function(char *input) {
-        char buffer[10];
-        strcpy(buffer, input);
-        return 0;
-    }""",
+    # Confusion matrix
+    cm = results['confusion_matrix']
+    print(f"\nConfusion Matrix:")
+    print(f"True Positives: {cm['tp']} | False Negatives: {cm['fn']}")
+    print(f"False Positives: {cm['fp']} | True Negatives: {cm['tn']}")
 
-    """void log_message(char *user_input) {
-        printf(user_input);
-    }""",
+    # Test on examples
+    examples = [
+        """static int vulnerable_function(char *input) {
+            char buffer[10];
+            strcpy(buffer, input);
+            return 0;
+        }""",
 
-    """void process_data(char *data) {
-        char *ptr = malloc(100);
-        free(ptr);
-        ptr[0] = 'A';
-    }""",
+        """void log_message(char *user_input) {
+            printf(user_input);
+        }""",
 
-    """static int safe_function(const char *input) {
-        char buffer[10];
-        size_t input_len = strlen(input);
-        if (input_len >= sizeof(buffer)) {
-            return -1;
-        }
-        strncpy(buffer, input, sizeof(buffer) - 1);
-        buffer[sizeof(buffer) - 1] = '\0';
-        return 0;
-    }"""
-]
+        """void process_data(char *data) {
+            char *ptr = malloc(100);
+            free(ptr);
+            ptr[0] = 'A';
+        }""",
 
-# Analyze each example
-print("\nEXAMPLE ANALYSES:")
-for i, code in enumerate(examples):
-    analysis = detector.analyze(code)
-    print(f"Example {i+1}:")
-    print(f"- Vulnerable: {analysis['is_vulnerable']}, Probability: {analysis['probability']:.4f}")
-    for issue_type, description in analysis['issues']:
-        print(f"- {issue_type}: {description}")
-    print()
+        """static int safe_function(const char *input) {
+            char buffer[10];
+            size_t input_len = strlen(input);
+            if (input_len >= sizeof(buffer)) {
+                return -1;
+            }
+            strncpy(buffer, input, sizeof(buffer) - 1);
+            buffer[sizeof(buffer) - 1] = '\0';
+            return 0;
+        }"""
+    ]
+
+    # Analyze each example
+    print("\nEXAMPLE ANALYSES:")
+    for i, code in enumerate(examples):
+        analysis = detector.analyze(code)
+        print(f"Example {i+1}:")
+        print(f"- Vulnerable: {analysis['is_vulnerable']}, Probability: {analysis['probability']:.4f}")
+        for issue_type, description in analysis['issues']:
+            print(f"- {issue_type}: {description}")
+        print()
+
+if __name__ == "__main__":
+    main()

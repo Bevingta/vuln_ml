@@ -2,10 +2,11 @@ import torch
 import pandas as pd
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, get_linear_schedule_with_warmup, logging
 import time
+from tqdm import tqdm
 
 logging.set_verbosity_error()
 
-df = pd.read_json("train.json")
+df = pd.read_json("../data/train.json")
 
 # Keep only the columns needed and drop any NaNs
 df = df[['func', 'target']].dropna(subset=['func', 'target'])
@@ -46,90 +47,84 @@ scheduler   = get_linear_schedule_with_warmup(
 
 
 # 4. Training loop using DataFrame batches
-with open("final_binary.txt","w") as log:
+with open("final_binary.txt", "w") as log:
     log.write("Starting training...\n")
     log.write(f"Batch size: {batch_size}\n")
 
     start_idx = 0  
 
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs), desc="Epochs"):
         step       = 0
         epoch_loss = 0.0
         start      = time.time()
         log.write(f"\nEpoch {epoch+1}/{epochs}\n")
         
         # iterate over df in batch-size chunks
-        while step < max_steps and start_idx < len(df):
-            batch_start = start_idx
-            end_idx = min(start_idx + batch_size, len(df))
-            batch   = df.iloc[start_idx:end_idx]
-            start_idx = end_idx 
-            
-            code_batch  = batch['func'].tolist()
-            label_batch = batch['target'].tolist()
+        with tqdm(total=min(max_steps, (len(df) - start_idx + batch_size - 1) // batch_size),
+                  desc=f"Epoch {epoch+1} Batches", leave=False) as pbar:
+            while step < max_steps and start_idx < len(df):
+                batch_start = start_idx
+                end_idx = min(start_idx + batch_size, len(df))
+                batch   = df.iloc[start_idx:end_idx]
+                start_idx = end_idx 
 
-            # tokenize
-            enc = tokenizer(
-                code_batch,
-                padding="max_length",
-                truncation=True,
-                max_length=512,
-                return_tensors="pt",
-            )
-            input_ids      = enc.input_ids.to(device)
-            attention_mask = enc.attention_mask.to(device)
-            labels         = torch.tensor(label_batch, dtype=torch.long).to(device)
+                code_batch  = batch['func'].tolist()
+                label_batch = batch['target'].tolist()
 
-            try:
-                outputs = model(
-                    input_ids=input_ids,
-                    attention_mask=attention_mask,
-                    labels=labels
+                # tokenize
+                enc = tokenizer(
+                    code_batch,
+                    padding="max_length",
+                    truncation=True,
+                    max_length=512,
+                    return_tensors="pt",
                 )
-            except ValueError as e:
-                msg = str(e)
-                if "same number of <eos> tokens" in msg:
-                    log.write(f"Skipping batch {batch_start}-{end_idx} due to eos mismatch: {msg}\n")
-                    # don’t increment `step`, don’t backprop, just move on
-                    continue
-                else:
-                    # re‐raise any other unexpected ValueError
-                    raise
-            loss   = outputs.loss
-            logits = outputs.logits
+                input_ids      = enc.input_ids.to(device)
+                attention_mask = enc.attention_mask.to(device)
+                labels         = torch.tensor(label_batch, dtype=torch.long).to(device)
 
-            # accumulate for average
-            epoch_loss += loss.item()
+                try:
+                    outputs = model(
+                        input_ids=input_ids,
+                        attention_mask=attention_mask,
+                        labels=labels
+                    )
+                except ValueError as e:
+                    msg = str(e)
+                    if "same number of <eos> tokens" in msg:
+                        log.write(f"Skipping batch {batch_start}-{end_idx} due to eos mismatch: {msg}\n")
+                        continue
+                    else:
+                        raise
 
-            # backward + step
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            scheduler.step()
+                loss   = outputs.loss
+                logits = outputs.logits
 
-            # metrics
-            preds = logits.argmax(dim=-1)
-            acc   = (preds == labels).float().mean().item()
-            step += 1
+                epoch_loss += loss.item()
 
-            log.write(f"\nStep {step} — loss {loss.item():.4f}, acc {acc:.4f}\n")
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                scheduler.step()
 
-            pairs = [
-                (int(p.item()), int(t.item()))
-                for p, t in zip(preds, labels)
-            ]
-            log.write(f"(Prediction, output): {pairs}\n")
+                preds = logits.argmax(dim=-1)
+                acc   = (preds == labels).float().mean().item()
+                step += 1
+                pbar.update(1)
 
-            if step >= max_steps:
-                break
+                log.write(f"\nStep {step} — loss {loss.item():.4f}, acc {acc:.4f}\n")
+
+                pairs = [
+                    (int(p.item()), int(t.item()))
+                    for p, t in zip(preds, labels)
+                ]
+                log.write(f"(Prediction, output): {pairs}\n")
+
+                if step >= max_steps:
+                    break
 
         duration = time.time() - start
-        # compute and log average loss for this epoch
-        if step > 0:
-            avg_loss = epoch_loss / step
-        else:
-            avg_loss = 0.0
-
+        avg_loss = epoch_loss / step if step > 0 else 0.0
         log.write(
             f"\nEpoch done in {duration:.1f}s, average loss: {avg_loss:.4f}\n\n"
         )

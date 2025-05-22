@@ -189,11 +189,11 @@ def preprocess_pipeline(args, batch_size, downsample_factor):
     if (args.do_data_splitting == False) and args.download_presplit_datasets is not None:
         load_huggingface_datasets(args.download_presplit_datasets)
 
-    elif not (os.path.exists("data/split_datasets/train.json") and os.path.exists("data/split_datasets/test.json") and os.path.exists("data/split_datasets/valid.json")):    
+    elif not (os.path.exists("../data/train.json") and os.path.exists("../data/test.json") and os.path.exists("../data/valid.json")):    
         print("Splitting dataset into train/val/test...")
         with open(args.in_dataset, 'r') as f:
             full_data = json.load(f)
-        subsample_and_split(full_data, "data/split_datasets", upsample_vulnerable=args.upsample_vulnerable, downsample_safe=args.downsample_safe, safe_ratio=args.vul_to_safe_ratio, downsample_factor=downsample_factor)
+        subsample_and_split(full_data, "../data", upsample_vulnerable=args.upsample_vulnerable, downsample_safe=args.downsample_safe, safe_ratio=args.vul_to_safe_ratio, downsample_factor=downsample_factor)
 
     # Load train/test/valid data arrays
     train_array = load_json_array(args.train_dataset)
@@ -271,10 +271,10 @@ def main():
 
     #* ARGUMENT PARSING
     parser = argparse.ArgumentParser(description="Train and evaluate GNN model")
-    parser.add_argument("--in-dataset", type=str, default="data/databases/complete_dataset.json", help="Path to the complete dataset (default: complete_dataset.json)")
-    parser.add_argument("--train-dataset", type=str, default="data/split_datasets/train.json", help="Path to the training dataset split (default: train.json)")
-    parser.add_argument("--test-dataset", type=str, default="data/split_datasets/test.json", help="Name of the testing dataset split (default: test.json)")
-    parser.add_argument("--valid-dataset", type=str, default="data/split_datasets/valid.json", help="Name of the validation dataset split (default: test.json)")    
+    parser.add_argument("--in-dataset", type=str, default="../data/complete_dataset.json", help="Path to the complete dataset (default: complete_dataset.json)")
+    parser.add_argument("--train-dataset", type=str, default="../data/train.json", help="Path to the training dataset split (default: train.json)")
+    parser.add_argument("--test-dataset", type=str, default="../data/test.json", help="Name of the testing dataset split (default: test.json)")
+    parser.add_argument("--valid-dataset", type=str, default="../data/valid.json", help="Name of the validation dataset split (default: test.json)")    
     parser.add_argument("--upsample-vulnerable", type=str, default=False, help="Upsample vulnerable entries (default: False)")
     parser.add_argument("--downsample-safe", type=str, default=False, help="Downsample safe entries (default: False)")
     parser.add_argument("--do-data-splitting", type=bool, default=False, help="Does data need to be split or is it already split? (default: False)")

@@ -1,0 +1,16 @@
+Starting training...
+Batch size: 4
+
+Epoch 1/700
+
+Step 1 — loss 0.7174, acc 0.5000
+(Prediction, output): [(0, 0), (1, 0), (1, 1), (0, 1)]
+
+Step 2 — loss 0.3122, acc 1.0000
+(Prediction, output): [(1, 1), (1, 1), (0, 0), (0, 0)]
+
+Step 3 — loss 0.4510, acc 0.7500
+(Prediction, output): [(1, 0), (0, 0), (0, 0), (1, 1)]
+
+Step 4 — loss 1.0775, acc 0.5000
+(Prediction, output): [(1, 0), (1, 1), (0, 0), (0, 1)]
