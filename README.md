@@ -64,8 +64,10 @@ You can use any of the following arguments:
 **4) Evaluation** \
 After full execution of the pipeline, the model will save model history and visualizations in a subfolder in the run_history directory. If you want to test the model's performance on a single function, you can run the following command: \
 `$ python predict_single_function.py --func func_text --saved-model-path path_to_saved_model` \
-where `path_to_saved_model` is a path to one of the saved models in run_history and `func_text` is a function in string format. 
-
+where `path_to_saved_model` is a path to one of the saved models in run_history and `func_text` is a function in string format. \
+Additionally, if you have a .c file containing multiple functions, you can run the following command: \
+`$ python predict_single_function.py --func-path func_path --saved-model-path path_to_saved_model` \
+where `func_path` is the path to the .c file you wish to analyze.
 
 ## Run Random Forest
 Navigate to the `vuln_ml/random_forest` directory. \
