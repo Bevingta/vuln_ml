@@ -28,8 +28,9 @@ All of the entries should be contained in an array in a json file. If you would 
 where `repo_id` is a repo id such as _username/dataset_name_. 
 
 ## Run Static Analyzer
-`$ cd rule_based_benchmark` \
-`$ python run_rule_based_benchmark.py`
+Run the following commands:
+1) `$ cd rule_based_benchmark` 
+2) `$ python run_rule_based_benchmark.py`
 
 ## Run GNN
 Navigate to the `gnn` directory. \
