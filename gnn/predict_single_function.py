@@ -122,8 +122,6 @@ if __name__ == "__main__":
         funcs = extract_all_c_functions(func_path)
     if func:
         funcs = [func]
-    
-    print(len(funcs))
 
     for func in funcs:
         prediction = predict_single_function(func, model_path, w2v)
