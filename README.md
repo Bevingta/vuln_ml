@@ -1,5 +1,5 @@
 # VulnML
-This is the final project for _Topics in Computational Intelligence: Machine Learning Projects_ with Professor Bento. 
+This is the final project for _Topics in Computational Intelligence: Machine Learning Projects_ with Professor Bento at Boston College. 
 
 The goal of this project was to identify the most effective machine learning approach for detecting security vulnerabilities in source code. To establish a performance baseline, we first developed a static vulnerability analyzer that uses pattern-matching and simple text-recognition heuristics. Building upon this, we explored three machine learning architectures: a Graph Neural Network (GNN) that leverages the structural semantics of code, a Random Forest classifier using manually engineered features, and a Transformer-based model (CodeT5) that applies pre-trained deep learning to code understanding.
 
@@ -7,16 +7,10 @@ The goal of this project was to identify the most effective machine learning app
 **1) Clone the repository** \
 `$ git clone https://github.com/Bevingta/vuln_ml.git` \
 **2) Install required libraries** \
-After navigating to the project directory, run: `$ pip install -r requirements.txt` 
+After navigating to the project directory, run: `$ pip install -r requirements.txt`  
 
-## Run Static Analyzer
-`$ cd rule_based_benchmark` \
-`$ python run_rule_based_benchmark.py`
-
-## Run GNN
-Navigate to the gnn directory: `$ cd gnn` \
-**1) Dataset setup** 
-You can either use your own dataset, or download one of our pre-made datasets. If you use your own dataset, you entries in the dataset need to follow the following format:
+## Data Preparation
+The dataset file should be contained in the directory named _data_. You can either use your own dataset, or download one of our pre-made datasets. If you use your own dataset, you entries in the dataset need to follow the following format:
 ```
 {
     "idx": 253185,
@@ -29,9 +23,18 @@ You can either use your own dataset, or download one of our pre-made datasets. I
     "database_origin": "bigvul"
   }
 ```
-All of the entries should be contained in an array in a json file. If you would like to use one of our pre-made datasets, you can use one of the following datasets: [PrimeVul Upsampled](https://huggingface.co/datasets/alexv26/PrimeVulOversampled), [BigVul Upsampled](https://huggingface.co/datasets/alexv26/BigVulOversampled), or our [Combined Dataset](https://huggingface.co/datasets/alexv26/GNNVulDatasets). To download a huggingface dataset while you run the code, you can use the following command: \
-`$ python gnn_pipeline.py --download-presplit-datasets repo_id` \
+All of the entries should be contained in an array in a json file. If you would like to use one of our pre-made datasets, you can use one of the following datasets: [PrimeVul Upsampled](https://huggingface.co/datasets/alexv26/PrimeVulOversampled), [BigVul Upsampled](https://huggingface.co/datasets/alexv26/BigVulOversampled), or our [Combined Dataset](https://huggingface.co/datasets/alexv26/GNNVulDatasets). To download a database from huggingface, you can use the following command: \
+`$ python download_data.py --repo-id repo_id` \
 where `repo_id` is a repo id such as _username/dataset_name_. 
+
+## Run Static Analyzer
+`$ cd rule_based_benchmark` \
+`$ python run_rule_based_benchmark.py`
+
+## Run GNN
+Navigate to the `gnn` directory. \
+**1) Dataset setup** \
+Ensure datasets are downloaded in the `vuln_ml/data` directory.
 
 **2) Set configs** \
 In the configs.json file, you can change the configs for the execution, including the number of epochs, patience (how many epochs without improvement until model stops early), L2 regularization rate, dropout rate, etc.
@@ -62,3 +65,23 @@ You can use any of the following arguments:
 After full execution of the pipeline, the model will save model history and visualizations in a subfolder in the run_history directory. If you want to test the model's performance on a single function, you can run the following command: \
 `$ python predict_single_function.py --func func_text --saved-model-path path_to_saved_model` \
 where `path_to_saved_model` is a path to one of the saved models in run_history and `func_text` is a function in string format. 
+
+
+## Run Random Forest
+Navigate to the `vuln_ml/random_forest` directory. \
+**1) Dataset setup** \
+Ensure datasets are downloaded in the `vuln_ml/data` directory.
+**2) Execute code** \
+Run the following command: \
+`python rf_pipeline.py`
+
+## Run CodeT5 Transformer
+Navigate to the `vuln_ml/binary_codeT5` directory. \
+**1) Dataset setup** \
+Ensure datasets are downloaded in the `vuln_ml/data` directory.
+**2) Execute code** \
+Run the following command: \
+`python t5_pipeline.py`
+
+# Literature
+Please see our paper to read about our methodology and process: [VulnML Paper](https://www.dropbox.com/scl/fi/kexa4ehuy04yr1z89lk2z/VulnML.pdf?rlkey=6lhr5w6en2f6hpnk31lbphkv7&st=m6k9tthb&dl=0)
