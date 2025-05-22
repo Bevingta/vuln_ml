@@ -87,5 +87,5 @@ Run the following command: \
 `python t5_pipeline.py`
 
 # Literature
-Please see our paper to read about our methodology and process: <a href="https://www.dropbox.com/scl/fi/kexa4ehuy04yr1z89lk2z/VulnML.pdf?rlkey=6lhr5w6en2f6hpnk31lbphkv7&st=m6k9tthb&dl=0" target="_blank" rel="noopener noreferrer">View VulnML PDF</a>
+Please see our paper to read about our methodology and process: <a href="https://www.dropbox.com/scl/fi/kexa4ehuy04yr1z89lk2z/VulnML.pdf?rlkey=6lhr5w6en2f6hpnk31lbphkv7&st=m6k9tthb&dl=0" target="_blank" rel="noopener noreferrer">VulnML PDF</a>
 
