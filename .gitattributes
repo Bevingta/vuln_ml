@@ -1,1 +1,9 @@
-*.h linguist-language=Python
+# Ignore typical noise folders
+__pycache__/* linguist-vendored
+*.so linguist-generated
+*.ipynb linguist-language=Python
+
+# Force language override
+*.txt linguist-language=Text
+*.csv linguist-language=Text
+*.json linguist-language=JSON
