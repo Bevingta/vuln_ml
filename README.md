@@ -1,4 +1,7 @@
 # VulnML
+<img width="1644" height="680" alt="vulnml" src="https://github.com/user-attachments/assets/508432dd-1fe0-4370-a50e-27580a4c1220" />
+
+
 This is the final project for _Topics in Computational Intelligence: Machine Learning Projects_ with Professor Bento at Boston College. 
 
 The goal of this project was to identify the most effective machine learning approach for detecting security vulnerabilities in source code. To establish a performance baseline, we first developed a static vulnerability analyzer that uses pattern-matching and simple text-recognition heuristics. Building upon this, we explored three machine learning architectures: a Graph Neural Network (GNN) that leverages the structural semantics of code, a random forest classifier using manually engineered features, and a transformer-based model (CodeT5) that applies pre-trained deep learning to code understanding.
