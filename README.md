@@ -73,7 +73,7 @@ where `func_path` is the path to the .c file you wish to analyze.
 ## Run Random Forest
 Navigate to the `vuln_ml/random_forest` directory. \
 **1) Dataset setup** \
-Ensure datasets are downloaded in the `vuln_ml/data` directory.
+Ensure datasets are downloaded in the `vuln_ml/data` directory. \
 **2) Execute code** \
 Run the following command: \
 `python rf_pipeline.py`
@@ -81,7 +81,7 @@ Run the following command: \
 ## Run CodeT5 Transformer
 Navigate to the `vuln_ml/binary_codeT5` directory. \
 **1) Dataset setup** \
-Ensure datasets are downloaded in the `vuln_ml/data` directory.
+Ensure datasets are downloaded in the `vuln_ml/data` directory. \
 **2) Execute code** \
 Run the following command: \
 `python t5_pipeline.py`
